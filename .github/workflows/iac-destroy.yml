@@ -1,0 +1,38 @@
+name: iac-destroy
+
+on: workflow_dispatch
+
+env:
+  RGLOCATION: southeastasia
+  RGNAME: rg-devcon-2021
+  PREFIX: daprdc
+
+jobs:
+  deprovision-infra:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@master
+
+    - name: Terraform Init and Destroy
+      run: |
+        # Exit when any command returns a failure status
+        set -e        
+        cd ./.github/terraform
+
+        # Write backend.tfvars
+        echo 'resource_group_name = "'$TFSTATERG'"' | tee backend.tfvars
+        echo 'storage_account_name = "'$TFSTATESTORAGE'"' | tee -a backend.tfvars
+        echo 'container_name = "tfstate"' | tee -a backend.tfvars
+        echo 'key = "'$PREFIX'-terraform.tfstate"' | tee -a backend.tfvars
+        
+        # Initialize Terraform
+        terraform init -input=false -backend-config="backend.tfvars"
+        
+        # Destroy Terraform plan
+        terraform destroy -input=false -auto-approve
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        TFSTATERG: ${{ secrets.TFSTATERG }}
+        TFSTATESTORAGE: ${{ secrets.TFSTATESTORAGE }}
+
