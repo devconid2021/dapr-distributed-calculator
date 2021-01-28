@@ -13,8 +13,7 @@ provider "azurerm" {
 provider "helm" {
   version = "1.2.2"
   kubernetes {
-    host = azurerm_kubernetes_cluster.daprdc.kube_config[0].host
-
+    host                   = azurerm_kubernetes_cluster.daprdc.kube_config[0].host
     client_key             = base64decode(azurerm_kubernetes_cluster.daprdc.kube_config[0].client_key)
     client_certificate     = base64decode(azurerm_kubernetes_cluster.daprdc.kube_config[0].client_certificate)
     cluster_ca_certificate = base64decode(azurerm_kubernetes_cluster.daprdc.kube_config[0].cluster_ca_certificate)
@@ -50,9 +49,6 @@ resource "azurerm_kubernetes_cluster" "daprdc" {
   }
 
   addon_profile {
-    kube_dashboard {
-      enabled = true
-    }
     http_application_routing {
       enabled = true
     }
@@ -72,6 +68,24 @@ resource "helm_release" "dapr" {
     create_namespace = true
 }
 
-output "kube_config" {
-  value = azurerm_kubernetes_cluster.daprdc.kube_config_raw
+resource "azurerm_redis_cache" "daprdc" {
+  name                = format("arc-%s", var.arc_name)
+  location            = azurerm_resource_group.daprdc.location
+  resource_group_name = azurerm_resource_group.daprdc.name
+  capacity            = 0
+  family              = "C"
+  sku_name            = "Basic"
+  enable_non_ssl_port = true
+}
+
+resource "azurerm_key_vault_secret" "akvarchostname" {
+  name         = "arc-hostname"
+  value        = azurerm_redis_cache.daprdc.hostname
+  key_vault_id = format("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.KeyVault/vaults/%s", var.subscription_id, var.tfstaterg, var.akv_name)
+}
+
+resource "azurerm_key_vault_secret" "akvarckey" {
+  name         = "arc-key"
+  value        = azurerm_redis_cache.daprdc.primary_access_key
+  key_vault_id = format("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.KeyVault/vaults/%s", var.subscription_id, var.tfstaterg, var.akv_name)
 }

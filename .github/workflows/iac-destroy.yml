@@ -35,4 +35,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         TFSTATERG: ${{ secrets.TFSTATERG }}
         TFSTATESTORAGE: ${{ secrets.TFSTATESTORAGE }}
-
+        ARM_CLIENT_ID: ${{ secrets.CLIENTID }}
+        ARM_CLIENT_SECRET: ${{ secrets.CLIENTSECRET }}
+        ARM_TENANT_ID: ${{ secrets.TENANTID }}
+        ARM_SUBSCRIPTION_ID: ${{ secrets.SUBSCRIPTIONID }}

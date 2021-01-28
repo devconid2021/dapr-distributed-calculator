@@ -10,6 +10,22 @@ variable "aks_name" {
   description = "The name of the kubernetes"
 }
 
+variable "arc_name" {
+  description = "The name of the redis cache"
+}
+
+variable "subscription_id" {
+  description = "The id of the subscription"
+}
+
+variable "tfstaterg" {
+  description = "The name of the terraform state store"
+}
+
+variable "akv_name" {
+  description = "The name of the key vault"
+}
+
 variable "client_id" {
   description = "The name of the kubernetes"
 }
