@@ -14,13 +14,18 @@ jobs:
       - name: Build docker image
         run: | 
           REGISTRY=${{ env.ACRSERVER }} make build
-      - name: Publish docker image
+      - uses: azure/docker-login@v1
+        name: Docker login
+        with:
+          login-server: ${{ env.ACRSERVER }}
+          username: ${{ secrets.ACRID }}
+          password: ${{ secrets.ACRSECRET }} 
+      - name: Push docker image
         # if: github.event_name != 'pull_request'
         run: |
-          docker login -u ${{ secrets.ACRID }} -p ${{ secrets.ACRSECRET }} ${{ env.ACRSERVER }}
           REGISTRY=${{ env.ACRSERVER }} make push
     env:
-      ACRSERVER: ${{ secrets.ACRSERVER }}
+      ACRSERVER: ${{ secrets.ACRNAME }}.azurecr.io
   CodeQL-Build:
     needs: build
     runs-on: ubuntu-latest
