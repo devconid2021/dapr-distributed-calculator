@@ -21,7 +21,7 @@ jobs:
           username: ${{ secrets.ACRID }}
           password: ${{ secrets.ACRSECRET }} 
       - name: Push docker image
-        # if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request'
         run: |
           REGISTRY=${{ env.ACRSERVER }} make push
     env:
