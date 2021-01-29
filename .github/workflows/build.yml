@@ -67,8 +67,8 @@ jobs:
       - uses: azure/aks-set-context@v1
         with:
           creds: '${{ secrets.AZCREDENTIALS }}'
-          cluster-name: ${{ env.AKSNAME }}
-          resource-group: ${{ env.AKSRG }}
+          cluster-name: ${{ secrets.AKSNAME }}
+          resource-group: ${{ secrets.AKSRG }}
       # Create namespace if doesn't exist
       - run: |
           kubectl create namespace ${{ env.NAMESPACE }} --dry-run -o json | kubectl apply -f -
@@ -92,10 +92,3 @@ jobs:
           imagepullsecrets: |
             ${{ env.SECRET }}
           namespace: ${{ env.NAMESPACE }}
-    env:
-      REGISTRY_NAME: {registry-name}
-      CLUSTER_NAME: {cluster-name}
-      CLUSTER_RESOURCE_GROUP: {resource-group-name}
-      NAMESPACE: {namespace-name}
-      SECRET: {secret-name}
-      APP_NAME: {app-name}
