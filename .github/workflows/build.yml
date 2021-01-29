@@ -26,7 +26,7 @@ jobs:
           REGISTRY=${{ env.ACRSERVER }} make push
     env:
       ACRSERVER: ${{ secrets.ACRNAME }}.azurecr.io
-  CodeQL-Build:
+  code-scanning:
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -58,3 +58,39 @@ jobs:
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v1
+  deploy:
+    needs: code-scanning
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@main
+    # Set the target Azure Kubernetes Service (AKS) cluster. 
+    - uses: azure/aks-set-context@v1
+      with:
+        creds: '${{ secrets.AZCREDENTIALS }}'
+        cluster-name: ${{ env.AKSNAME }}
+        resource-group: ${{ env.AKSRG }}
+    # Create namespace if doesn't exist
+    - run: |
+        kubectl create namespace ${{ env.NAMESPACE }} --dry-run -o json | kubectl apply -f -
+    
+    # Create image pull secret for ACR
+    - uses: azure/k8s-create-secret@v1
+      with:
+        container-registry-url: ${{ env.REGISTRY_NAME }}.azurecr.io
+        container-registry-username: ${{ secrets.ACRNAME }}
+        container-registry-password: ${{ secrets.ACRSECRET }}
+        secret-name: ${{ env.SECRET }}
+        namespace: ${{ env.NAMESPACE }}
+        force: true
+    
+    # Deploy app to AKS
+    - uses: azure/k8s-deploy@v1
+      with:
+        manifests: |
+          manifests/deployment.yml
+          manifests/service.yml
+        images: |
+          ${{ env.REGISTRY_NAME }}.azurecr.io/${{ env.APP_NAME }}:${{ github.sha }}
+        imagepullsecrets: |
+          ${{ env.SECRET }}
+        namespace: ${{ env.NAMESPACE }}
