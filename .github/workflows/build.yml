@@ -72,6 +72,26 @@ jobs:
       # Create namespace if doesn't exist
       - run: |
           kubectl create namespace ${{ env.NAMESPACE }} --dry-run -o json | kubectl apply -f -
+      # Create image pull secret for ACR
+      - uses: azure/k8s-create-secret@v1
+          with:
+            container-registry-url: ${{ env.REGISTRY_NAME }}.azurecr.io
+            container-registry-username: ${{ secrets.ACRNAME }}
+            container-registry-password: ${{ secrets.ACRSECRET }}
+            secret-name: ${{ env.SECRET }}
+            namespace: ${{ env.NAMESPACE }}
+            force: true
+      # Deploy app to AKS
+      - uses: azure/k8s-deploy@v1
+          with:
+            manifests: |
+              manifests/deployment.yml
+              manifests/service.yml
+            images: |
+              ${{ env.REGISTRY_NAME }}.azurecr.io/${{ env.APP_NAME }}:${{ github.sha }}
+            imagepullsecrets: |
+              ${{ env.SECRET }}
+            namespace: ${{ env.NAMESPACE }}
     env:
       REGISTRY_NAME: {registry-name}
       CLUSTER_NAME: {cluster-name}
@@ -79,23 +99,3 @@ jobs:
       NAMESPACE: {namespace-name}
       SECRET: {secret-name}
       APP_NAME: {app-name}
-    # Create image pull secret for ACR
-    - uses: azure/k8s-create-secret@v1
-        with:
-          container-registry-url: ${{ env.REGISTRY_NAME }}.azurecr.io
-          container-registry-username: ${{ secrets.ACRNAME }}
-          container-registry-password: ${{ secrets.ACRSECRET }}
-          secret-name: ${{ env.SECRET }}
-          namespace: ${{ env.NAMESPACE }}
-          force: true
-    # Deploy app to AKS
-    - uses: azure/k8s-deploy@v1
-        with:
-          manifests: |
-            manifests/deployment.yml
-            manifests/service.yml
-          images: |
-            ${{ env.REGISTRY_NAME }}.azurecr.io/${{ env.APP_NAME }}:${{ github.sha }}
-          imagepullsecrets: |
-            ${{ env.SECRET }}
-          namespace: ${{ env.NAMESPACE }}
