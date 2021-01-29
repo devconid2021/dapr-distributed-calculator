@@ -1,3 +1,4 @@
+name: dapr-distributed-calculator
 on:
   push:
     branches:
@@ -5,17 +6,19 @@ on:
   pull_request:
     branches:
       - main
-build:
-  needs: provision-infra
-  steps:
-    - uses: actions/checkout@master
-    - name: Build docker image
-      run: | 
-        REGISTRY=${{ env.ACRSERVER }} make build
-    - name: Publish docker image
-      # if: github.event_name != 'pull_request'
-      run: |
-        docker login -u ${{ secrets.ACRID }} -p ${{ secrets.ACRSECRET }} ${{ env.ACRSERVER }}
-        REGISTRY=${{ env.ACRSERVER }} make push
-  env:
-    ACRSERVER: ${{ secrets.ACRSERVER }}
+jobs:
+  build:
+    needs: provision-infra
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Build docker image
+        run: | 
+          REGISTRY=${{ env.ACRSERVER }} make build
+      - name: Publish docker image
+        # if: github.event_name != 'pull_request'
+        run: |
+          docker login -u ${{ secrets.ACRID }} -p ${{ secrets.ACRSECRET }} ${{ env.ACRSERVER }}
+          REGISTRY=${{ env.ACRSERVER }} make push
+    env:
+      ACRSERVER: ${{ secrets.ACRSERVER }}
