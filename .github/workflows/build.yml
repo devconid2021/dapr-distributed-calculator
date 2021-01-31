@@ -19,6 +19,14 @@ on:
     # - cron: '30 1 * * 0'
 
 jobs:
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@main
+    - name: Test
+      uses: skx/github-action-tester@master
+  
   scan:
     runs-on: ubuntu-latest
     steps:
