@@ -28,6 +28,7 @@ jobs:
       uses: skx/github-action-tester@master
   
   scan:
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
