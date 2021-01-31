@@ -6,51 +6,102 @@ on:
   pull_request:
     branches:
       - main
+  # schedule:
+    #        ┌───────────── minute (0 - 59)
+    #        │  ┌───────────── hour (0 - 23)
+    #        │  │ ┌───────────── day of the month (1 - 31)
+    #        │  │ │ ┌───────────── month (1 - 12 or JAN-DEC)
+    #        │  │ │ │ ┌───────────── day of the week (0 - 6 or SUN-SAT)
+    #        │  │ │ │ │
+    #        │  │ │ │ │
+    #        │  │ │ │ │
+    #        *  * * * *
+    # - cron: '30 1 * * 0'
+
 jobs:
-  build:
-    needs: provision-infra
+  # test:
+    # name: test
+    # runs-on: ubuntu-latest
+    # steps:
+    # - uses: actions/checkout@main
+    # - name: Test
+      # uses: skx/github-action-tester@master
+  
+ scan:
+   # needs: test
+   runs-on: ubuntu-latest
+   steps:
+     - name: Checkout repository
+       uses: actions/checkout@v2
+     - name: Initialize CodeQL
+       uses: github/codeql-action/init@v1
+     - name: Autobuild
+       uses: github/codeql-action/autobuild@v1
+     - name: Perform CodeQL Analysis
+       uses: github/codeql-action/analyze@v1
+        
+ build:
+   needs: scan
+   runs-on: ubuntu-latest
+   steps:
+     - uses: actions/checkout@main
+     - name: Build docker image
+       run: | 
+         REGISTRY=${{ env.ACRSERVER }} make build
+     - uses: azure/docker-login@v1
+       name: Docker login
+       with:
+         login-server: ${{ env.ACRSERVER }}
+         username: ${{ secrets.ACRID }}
+         password: ${{ secrets.ACRSECRET }} 
+     - name: Push docker image
+       # if: github.event_name != 'pull_request'
+       run: |
+         REGISTRY=${{ env.ACRSERVER }} make push
+   env:
+     ACRSERVER: ${{ secrets.ACRNAME }}.azurecr.io
+  
+  deploy:
+   needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
-      - name: Build docker image
-        run: | 
-          REGISTRY=${{ env.ACRSERVER }} make build
-      - name: Publish docker image
-        # if: github.event_name != 'pull_request'
-        run: |
-          docker login -u ${{ secrets.ACRID }} -p ${{ secrets.ACRSECRET }} ${{ env.ACRSERVER }}
-          REGISTRY=${{ env.ACRSERVER }} make push
+      - uses: actions/checkout@main
+      - uses: azure/aks-set-context@v1
+        with:
+          creds: '${{ secrets.AZCREDENTIALS }}'
+          cluster-name: ${{ secrets.AKSNAME }}
+          resource-group: ${{ secrets.AKSRG }}
+        id: login    
+      
+      # Create namespace if doesn't exist
+      # - run: |
+          # kubectl create namespace ${{ env.NAMESPACE }} --dry-run -o json | kubectl apply -f -
+      
+      # Create image pull secret for ACR
+      - uses: azure/k8s-create-secret@v1
+        with:
+          container-registry-url: ${{ env.ACRSERVER }}
+          container-registry-username: ${{ secrets.ACRNAME }}
+          container-registry-password: ${{ secrets.ACRSECRET }}
+          secret-name: ${{ env.SECRET }}
+          # namespace: ${{ env.NAMESPACE }}
+          # force: true
+      
+      # Deploy app to AKS
+      - uses: azure/k8s-deploy@v1
+        with:
+          manifests: |
+            deploy/dotnet-subtractor.yaml
+            deploy/go-adder.yaml
+            deploy/node-divider.yaml
+            deploy/python-multiplier.yaml
+            deploy/react-calculator.yaml
+            deploy/redis.yaml
+          images: |
+            ${{ env.ACRSERVER }}:${{ github.sha }}
+          imagepullsecrets: |
+            ${{ env.SECRET }}
+          # namespace: ${{ env.NAMESPACE }}
     env:
-      ACRSERVER: ${{ secrets.ACRSERVER }}
-  CodeQL-Build:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
-      # Initializes the CodeQL tools for scanning.
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v1
-        # Override language selection by uncommenting this and choosing your languages
-        # with:
-        #   languages: go, javascript, csharp, python, cpp, java
-
-      # Autobuild attempts to build any compiled languages (C/C++, C#, or Java).
-      # If this step fails, then you should remove it and run the build manually (see below).
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v1
-
-      # ℹ️ Command-line programs to run using the OS shell.
-      # 📚 https://git.io/JvXDl
-
-      # ✏️ If the Autobuild fails above, remove it and uncomment the following
-      #    three lines and modify them (or add more) to build your code if your
-      #    project uses a compiled language
-
-      #- run: |
-      #   make bootstrap
-      #   make release
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v1
+      ACRSERVER: ${{ secrets.ACRNAME }}.azurecr.io
+      SECRET: ${{ secrets.ACRNAME }}
