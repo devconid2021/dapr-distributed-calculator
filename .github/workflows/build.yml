@@ -27,42 +27,42 @@ jobs:
     # - name: Test
       # uses: skx/github-action-tester@master
   
-  scan:
-    # needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v1
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v1
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v1
+#  scan:
+#    # needs: test
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Checkout repository
+#        uses: actions/checkout@v2
+#      - name: Initialize CodeQL
+#        uses: github/codeql-action/init@v1
+#      - name: Autobuild
+#        uses: github/codeql-action/autobuild@v1
+#      - name: Perform CodeQL Analysis
+#        uses: github/codeql-action/analyze@v1
         
-  build:
-    needs: scan
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@main
-      - name: Build docker image
-        run: | 
-          REGISTRY=${{ env.ACRSERVER }} make build
-      - uses: azure/docker-login@v1
-        name: Docker login
-        with:
-          login-server: ${{ env.ACRSERVER }}
-          username: ${{ secrets.ACRID }}
-          password: ${{ secrets.ACRSECRET }} 
-      - name: Push docker image
-        if: github.event_name != 'pull_request'
-        run: |
-          REGISTRY=${{ env.ACRSERVER }} make push
-    env:
-      ACRSERVER: ${{ secrets.ACRNAME }}.azurecr.io
+#  build:
+#    needs: scan
+#    runs-on: ubuntu-latest
+#    steps:
+#      - uses: actions/checkout@main
+#      - name: Build docker image
+#        run: | 
+#          REGISTRY=${{ env.ACRSERVER }} make build
+#      - uses: azure/docker-login@v1
+#        name: Docker login
+#        with:
+#          login-server: ${{ env.ACRSERVER }}
+#          username: ${{ secrets.ACRID }}
+#          password: ${{ secrets.ACRSECRET }} 
+#      - name: Push docker image
+#        if: github.event_name != 'pull_request'
+#        run: |
+#          REGISTRY=${{ env.ACRSERVER }} make push
+#    env:
+#      ACRSERVER: ${{ secrets.ACRNAME }}.azurecr.io
   
   deploy:
-    needs: build
+#    needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@main
