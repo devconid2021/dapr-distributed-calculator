@@ -69,6 +69,7 @@ jobs:
           creds: '${{ secrets.AZCREDENTIALS }}'
           cluster-name: ${{ secrets.AKSNAME }}
           resource-group: ${{ secrets.AKSRG }}
+        id: login    
       # Create namespace if doesn't exist
       - run: |
           kubectl create namespace ${{ env.NAMESPACE }} --dry-run -o json | kubectl apply -f -
