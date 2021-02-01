@@ -1,15 +1,11 @@
 name: dapr-distributed-calculator
 on:
   push:
-    paths:
-      - '.github/workflows/build.yaml'
-    # branches:
-    #   - main
+    branches:
+      - main
   pull_request:
-    paths:
-      - '.github/workflows/build.yaml'
-    # branches:
-    #   - main
+    branches:
+      - main
   # schedule:
     #        ┌───────────── minute (0 - 59)
     #        │  ┌───────────── hour (0 - 23)
