@@ -44,19 +44,31 @@ jobs:
     # needs: scan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@main
+      - name: Checkout repository
+        uses: actions/checkout@main
+
       - name: Build docker image
         run: | 
           REGISTRY=${{ env.ACRSERVER }} make build
 
       # container scan
       # https://github.com/Azure/container-scan
-      - uses: Azure/container-scan@v0
-        name: Scan docker image
-        with:
-          image-name: ${{ env.ACRSERVER }}
+      # - uses: Azure/container-scan@v0
+      #   name: Scan docker image
+      #   with:
+      #     image-name: ${{ env.ACRSERVER }}
 
-      - uses: azure/docker-login@v1
+      - name: Vulnerability scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ env.ACRSERVER }}'
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          severity: 'CRITICAL,HIGH'
+
+      - name: Docker login
+        uses: azure/docker-login@v1
         name: Docker login
         with:
           login-server: ${{ env.ACRSERVER }}
@@ -73,8 +85,10 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@main
-      - uses: azure/aks-set-context@v1
+      - name: Checkout repository
+        uses: actions/checkout@main
+      - name: Get AKS context
+        uses: azure/aks-set-context@v1
         with:
           creds: '${{ secrets.AZCREDENTIALS }}'
           cluster-name: ${{ secrets.AKSNAME }}
@@ -82,21 +96,23 @@ jobs:
         id: login    
       
       # Create namespace if doesn't exist
-      - run: |
-          kubectl create namespace ${{ env.NAMESPACE }} --dry-run -o json | kubectl apply -f -
+      # - run: |
+      #     kubectl create namespace ${{ env.NAMESPACE }} --dry-run -o json | kubectl apply -f -
       
       # Create image pull secret for ACR
-      - uses: azure/k8s-create-secret@v1
+      - name: Pull ACR image
+        uses: azure/k8s-create-secret@v1
         with:
           container-registry-url: ${{ env.ACRSERVER }}
           container-registry-username: ${{ secrets.ACRNAME }}
           container-registry-password: ${{ secrets.ACRSECRET }}
           secret-name: ${{ env.SECRET }}
-          namespace: ${{ env.NAMESPACE }}
-          force: true
+          # namespace: ${{ env.NAMESPACE }}
+          # force: true
       
       # Deploy app to AKS
-      - uses: azure/k8s-deploy@v1
+      - name: Deploy to AKS
+        uses: azure/k8s-deploy@v1
         with:
           manifests: |
             deploy/dotnet-subtractor.yaml
@@ -113,4 +129,4 @@ jobs:
     env:
       ACRSERVER: ${{ secrets.ACRNAME }}.azurecr.io
       SECRET: ${{ secrets.ACRNAME }}
-      NAMESPACE: ${{ secrets.ACRNAME }}
+      # NAMESPACE: ${{ secrets.ACRNAME }}
