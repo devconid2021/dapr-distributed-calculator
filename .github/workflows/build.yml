@@ -46,7 +46,8 @@ jobs:
       - name: Upload scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v1
         with:
-          sarif_file: results/*
+          sarif_file: results/python-builtin.sarif
+          # /home/runner/work/dapr-distributed-calculator/results/python-builtin.sarif
   build:
     needs: scan
     runs-on: ubuntu-latest
