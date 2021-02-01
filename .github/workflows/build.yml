@@ -56,7 +56,7 @@ jobs:
       - uses: Azure/container-scan@v0
         name: Docker image scan
         with:
-          image-name: ${{ env.ACRSERVER }}
+          image-name: ${{ env.ACRSERVER }}/devconid2021/distributed-calculator-node
 
       - name: Docker image vulnerability scan
         uses: aquasecurity/trivy-action@master
