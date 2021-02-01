@@ -28,7 +28,7 @@ jobs:
       # uses: skx/github-action-tester@master
   
 #  scan:
-#    # needs: test
+#    needs: test
 #    runs-on: ubuntu-latest
 #    steps:
 #      - name: Checkout repository
@@ -74,8 +74,8 @@ jobs:
         id: login    
       
       # Create namespace if doesn't exist
-      # - run: |
-          # kubectl create namespace ${{ env.NAMESPACE }} --dry-run -o json | kubectl apply -f -
+      - run: |
+          kubectl create namespace ${{ env.NAMESPACE }} --dry-run -o json | kubectl apply -f -
       
       # Create image pull secret for ACR
       - uses: azure/k8s-create-secret@v1
@@ -84,8 +84,8 @@ jobs:
           container-registry-username: ${{ secrets.ACRNAME }}
           container-registry-password: ${{ secrets.ACRSECRET }}
           secret-name: ${{ env.SECRET }}
-          # namespace: ${{ env.NAMESPACE }}
-          # force: true
+          namespace: ${{ env.NAMESPACE }}
+          force: true
       
       # Deploy app to AKS
       - uses: azure/k8s-deploy@v1
@@ -105,3 +105,4 @@ jobs:
     env:
       ACRSERVER: ${{ secrets.ACRNAME }}.azurecr.io
       SECRET: ${{ secrets.ACRNAME }}
+      NAMESPACE: ${{ secrets.ACRNAME }}
