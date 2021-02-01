@@ -53,12 +53,12 @@ jobs:
 
       # container scan
       # https://github.com/Azure/container-scan
-      # - uses: Azure/container-scan@v0
-      #   name: Scan docker image
-      #   with:
-      #     image-name: ${{ env.ACRSERVER }}
+      - uses: Azure/container-scan@v0
+        name: Docker image scan
+        with:
+          image-name: ${{ env.ACRSERVER }}
 
-      - name: Vulnerability scan
+      - name: Docker image vulnerability scan
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: '${{ env.ACRSERVER }}'
