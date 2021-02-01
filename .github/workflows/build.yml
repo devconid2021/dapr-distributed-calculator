@@ -52,7 +52,7 @@ jobs:
       # container scan
       # https://github.com/Azure/container-scan
       - uses: Azure/container-scan@v0
-      - name: Scan docker image
+        name: Scan docker image
         with:
           image-name: ${{ env.ACRSERVER }}
 
