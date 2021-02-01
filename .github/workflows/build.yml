@@ -69,7 +69,6 @@ jobs:
 
       - name: Docker login
         uses: azure/docker-login@v1
-        name: Docker login
         with:
           login-server: ${{ env.ACRSERVER }}
           username: ${{ secrets.ACRID }}
