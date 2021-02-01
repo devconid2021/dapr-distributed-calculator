@@ -2,10 +2,62 @@ apiVersion: dapr.io/v1alpha1
 kind: Component
 metadata:
   name: statestore
+  # labels:
+  #   app: dapr
+  #   aadpodidbinding: "aksidentitybindingselector"
 spec:
   type: state.redis
   metadata:
   - name: redisHost
-    value: YOUR_REDIS_HOST_HERE
+    # value: YOUR_REDIS_HOST_HERE
+      volumeMounts:
+      - name: secrets-store-inline
+        mountPath: "/mnt/secrets-store"
+        readOnly: true
+      volumes:
+        - name: secrets-store-inline
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              providerName: "azure"
+              usePodIdentity: "true"          # [OPTIONAL] if not provided, will default to "false"
+              keyvaultName: "tfkv17580t"                # the name of the KeyVault
+              cloudName: ""          # [OPTIONAL for Azure] if not provided, azure environment will default to AzurePublicCloud
+              objects:  |
+                array:
+                  - |
+                    objectName: arc-key
+                    objectType: secret        # object types: secret, key or cert
+                    objectVersion: ""         # [OPTIONAL] object versions, default to latest if empty
+              resourceGroup: "Azure Internal Access"               
+              subscriptionId: "508539f5-2fde-47b2-b49b-aee559a85401"              # [REQUIRED for version < 0.0.4] the subscription ID of the KeyVault
+              tenantId: "72f988bf-86f1-41af-91ab-2d7cd011db47" 
   - name: redisPassword
-    value: YOUR_REDIS_PASSWORD_HERE
+    # value: YOUR_REDIS_PASSWORD_HERE
+      volumeMounts:
+      - name: secrets-store-inline
+        mountPath: "/mnt/secrets-store"
+        readOnly: true
+      volumes:
+        - name: secrets-store-inline
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              providerName: "azure"
+              usePodIdentity: "true"          # [OPTIONAL] if not provided, will default to "false"
+              keyvaultName: "tfkv17580t"                # the name of the KeyVault
+              cloudName: ""          # [OPTIONAL for Azure] if not provided, azure environment will default to AzurePublicCloud
+              objects:  |
+                array:
+                  - |
+                    objectName: arc-hostname
+                    objectType: secret        # object types: secret, key or cert
+                    objectVersion: ""         # [OPTIONAL] object versions, default to latest if empty
+              resourceGroup: "Azure Internal Access"               
+              subscriptionId: "508539f5-2fde-47b2-b49b-aee559a85401"              # [REQUIRED for version < 0.0.4] the subscription ID of the KeyVault
+              tenantId: "72f988bf-86f1-41af-91ab-2d7cd011db47"                    # the tenant ID of the KeyVault
+  # selector:
+  #   matchLabels:
+  #     app: alpine
