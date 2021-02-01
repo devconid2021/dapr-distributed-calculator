@@ -68,6 +68,13 @@ resource "helm_release" "dapr" {
     create_namespace = true
 }
 
+resource "helm_release" "csi" {
+    name             = "csi-secrets-store-provider-azure"
+    repository       = "https://raw.githubusercontent.com/Azure/secrets-store-csi-driver-provider-azure/master/charts"
+    chart            = "csi-secrets-store-provider-azure"
+    namespace        = "kube-system"
+}
+
 resource "azurerm_redis_cache" "daprdc" {
   name                = format("arc-%s", var.arc_name)
   location            = azurerm_resource_group.daprdc.location
