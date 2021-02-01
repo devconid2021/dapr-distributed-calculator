@@ -43,6 +43,10 @@ jobs:
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v1
         
+      - name: Upload scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v1
+        with:
+          sarif_file: results/*
   build:
     needs: scan
     runs-on: ubuntu-latest
@@ -63,20 +67,20 @@ jobs:
 
       # # container vulnerability scan
       # # https://github.com/aquasecurity/trivy-action
-      - name: Docker image Trivy vulnerability scan
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: '${{ env.ACRSERVER }}'
-          format: 'template'
-          template: '@/contrib/sarif.tpl'
-          output: 'trivy-results.sarif'
-          severity: 'CRITICAL,HIGH'
+      # - name: Docker image Trivy vulnerability scan
+      #   uses: aquasecurity/trivy-action@master
+      #   with:
+      #     image-ref: '${{ env.ACRSERVER }}'
+      #     format: 'template'
+      #     template: '@/contrib/sarif.tpl'
+      #     output: 'trivy-results.sarif'
+      #     severity: 'CRITICAL,HIGH'
 
-      - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v1
-        with:
-          sarif_file: 'trivy-results.sarif'
-          
+      # - name: Upload Trivy scan results to GitHub Security tab
+      #   uses: github/codeql-action/upload-sarif@v1
+      #   with:
+      #     sarif_file: 'trivy-results.sarif'
+
       - name: Docker login
         uses: azure/docker-login@v1
         with:
