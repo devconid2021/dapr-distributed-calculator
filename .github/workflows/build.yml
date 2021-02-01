@@ -63,14 +63,25 @@ jobs:
 
       # # container vulnerability scan
       # # https://github.com/aquasecurity/trivy-action
-      # - name: Docker image vulnerability scan
-      #   uses: aquasecurity/trivy-action@master
-      #   with:
-      #     image-ref: '${{ env.ACRSERVER }}'
-      #     format: 'table'
-      #     exit-code: '1'
-      #     ignore-unfixed: true
-      #     severity: 'CRITICAL,HIGH'
+      - name: Docker image Trivy vulnerability scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ env.ACRSERVER }}'
+          format: 'template'
+          template: '@/contrib/sarif.tpl'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v1
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - script: |
+    docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+    -v $HOME/Library/Caches:/root/.cache/ aquasec/trivy:0.9.2 --exit-code $(TRIVY_EXIT_CODE) \
+    $(CONTAINER_REGISTRY)/$(WORKSPACE_REPOSITORY):latest
+  displayName: scan workspace
 
       - name: Docker login
         uses: azure/docker-login@v1
