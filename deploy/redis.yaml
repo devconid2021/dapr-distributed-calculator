@@ -29,26 +29,28 @@ spec:
           objectType: secret        
     tenantId: ${{ secrets.AZTENANT }}                    # the tenant ID of the KeyVault  
 
-# ---
-# apiVersion: dapr.io/v1alpha1
-# kind: Component
-# metadata:
-#   name: statestore
-# spec:
-#   type: state.redis
-#     volumeMounts:
-#     - name: secrets-store-inline
-#       mountPath: "/mnt/secrets-store"
-#       readOnly: true
-#   volumes:
-#     - name: secrets-store-inline
-#       csi:
-#         driver: secrets-store.csi.k8s.io
-#         readOnly: true
-#         volumeAttributes:
-#           secretProviderClass: "secret-provider-kv"
-#   # metadata:
-#   # - name: redisHost
-#   #   value: YOUR_REDIS_HOST_HERE
-#   # - name: redisPassword
-#   #   value: YOUR_REDIS_PASSWORD_HERE
+---
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: statestore
+  labels:
+    aadpodidbinding: pod-id-binding
+spec:
+  type: state.redis
+    # volumeMounts:
+    # - name: secrets-store-inline
+    #   mountPath: "/mnt/secrets-store"
+    #   readOnly: true
+  volumes:
+    - name: secrets-store-inline
+      csi:
+        driver: secrets-store.csi.k8s.io
+        readOnly: true
+        volumeAttributes:
+          secretProviderClass: "akvstore"
+  # metadata:
+  # - name: redisHost
+  #   value: YOUR_REDIS_HOST_HERE
+  # - name: redisPassword
+  #   value: YOUR_REDIS_PASSWORD_HERE
