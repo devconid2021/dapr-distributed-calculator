@@ -8,11 +8,29 @@ on:
   #   branches:
   #     - main
 
+env:
+  RGLOCATION: southeastasia
+  RGNAME: rg-devcon-2021
+  PREFIX: daprdc
+  TFSTATERG: ${{ secrets.TFSTATERG }}
+  ARM_CLIENT_ID: ${{ secrets.CLIENTID }}
+  ARM_CLIENT_SECRET: ${{ secrets.CLIENTSECRET }}
+  ARM_TENANT_ID: ${{ secrets.TENANTID }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.SUBSCRIPTIONID }}
+  CERT: sp-cert
+  TFCLIENTID: ${{ secrets.TFCLIENTID }}
+  AKV_NAME: ${{ secrets.TFKV }}
+  ACRSERVER: ${{ secrets.ACRNAME }}.azurecr.io
+
 jobs:
   provision-infra:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
+    - name: AZ Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZCREDENTIALS }}
     - name: Terraform Init and Plan
       run: |
         # Exit when any command returns a failure status
@@ -22,34 +40,35 @@ jobs:
         # Write terraform.tfvars
         echo 'resource_group_location = "'${{ env.RGLOCATION }}'"' | tee terraform.tfvars
         echo 'resource_group_name = "'${{ env.RGNAME }}'"' | tee -a terraform.tfvars
-        echo 'aks_name = "'${{ env.PREFIX }}'"' | tee -a terraform.tfvars
-        echo 'arc_name = "'${{ env.PREFIX }}'"' | tee -a terraform.tfvars
-        echo 'akv_name = "'${{ secrets.TFKV }}'"' | tee -a terraform.tfvars
+        echo 'aks_name = "aks-'${{ env.PREFIX }}'"' | tee -a terraform.tfvars
+        echo 'arc_name = "arc-'${{ env.PREFIX }}'"' | tee -a terraform.tfvars
+        echo 'akv_name = "'${{ env.AKV_NAME }}'"' | tee -a terraform.tfvars
         echo 'client_id = "'${{ env.ARM_CLIENT_ID }}'"' | tee -a terraform.tfvars
         echo 'client_secret = "'${{ env.ARM_CLIENT_SECRET }}'"' | tee -a terraform.tfvars
         echo 'subscription_id = "'${{ env.ARM_SUBSCRIPTION_ID }}'"' | tee -a terraform.tfvars
         echo 'tfstaterg = "'${{ env.TFSTATERG }}'"' | tee -a terraform.tfvars
         
         # Write backend.tfvars
-        echo 'resource_group_name = "'$TFSTATERG'"' | tee backend.tfvars
+        echo 'resource_group_name = "'${{ env.TFSTATERG }}'"' | tee backend.tfvars
         echo 'storage_account_name = "'${{ secrets.TFSTATESTORAGE }}'"' | tee -a backend.tfvars
         echo 'container_name = "tfstate"' | tee -a backend.tfvars
-        echo 'key = "'$PREFIX'-terraform.tfstate"' | tee -a backend.tfvars
+        echo 'key = "'${{ env.PREFIX }}'-terraform.tfstate"' | tee -a backend.tfvars
 
         # Initialize Terraform
         terraform init -input=false -backend-config="backend.tfvars"
 
         # Apply Terraform plan
         terraform apply -input=false -auto-approve
-      env:
-        RGLOCATION: southeastasia
-        RGNAME: rg-devcon-2021
-        PREFIX: daprdc
-        TFSTATERG: ${{ secrets.TFSTATERG }}
-        ARM_CLIENT_ID: ${{ secrets.CLIENTID }}
-        ARM_CLIENT_SECRET: ${{ secrets.CLIENTSECRET }}
-        ARM_TENANT_ID: ${{ secrets.TENANTID }}
-        ARM_SUBSCRIPTION_ID: ${{ secrets.SUBSCRIPTIONID }}
+    - name: Additional Setup
+      run: |
+        # Exit when any command returns a failure status
+        set -e
+
+        # Temporary steps
+        az keyvault secret download --vault-name ${{ secrets.TFKV }} --name ${{ secrets.TFCERT }} --encoding base64 --file ${{ env.CERT }}.pfx
+        az aks get-credentials --resource-group ${{ env.RGNAME }} --name aks-${{ env.PREFIX }}
+        kubectl delete secret ${{ env.CERT }} --ignore-not-found
+        kubectl create secret generic ${{ env.CERT }} --from-file=./${{ env.CERT }}.pfx
   build:
     needs: provision-infra
     runs-on: ubuntu-latest
@@ -58,8 +77,8 @@ jobs:
       - name: Build docker image
         run: | 
           REGISTRY=${{ env.ACRSERVER }} make build
-      - uses: azure/docker-login@v1
-        name: Docker login
+      - name: Docker login
+        uses: azure/docker-login@v1
         with:
           login-server: ${{ env.ACRSERVER }}
           username: ${{ secrets.ACRID }}
@@ -68,5 +87,23 @@ jobs:
         # if: github.event_name != 'pull_request'
         run: |
           REGISTRY=${{ env.ACRSERVER }} make push
-    env:
-      ACRSERVER: ${{ secrets.ACRNAME }}.azurecr.io
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: AZ Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZCREDENTIALS }}
+    - name: Deploy Workload
+      run: |
+        # Exit when any command returns a failure status
+        set -e
+        cd ./deploy
+
+        # Temporary steps
+        az aks get-credentials --resource-group ${{ env.RGNAME }} --name aks-${{ env.PREFIX }}
+        envsubst < misc/azurekeyvault.yaml | kubectl apply -f -
+        kubectl apply -f misc/redis.yaml
+        kubectl apply -f .

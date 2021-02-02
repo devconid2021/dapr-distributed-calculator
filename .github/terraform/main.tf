@@ -27,10 +27,10 @@ resource "azurerm_resource_group" "daprdc" {
 }
 
 resource "azurerm_kubernetes_cluster" "daprdc" {
-  name                = format("aks-%s", var.aks_name)
+  name                = var.aks_name
   location            = azurerm_resource_group.daprdc.location
   resource_group_name = azurerm_resource_group.daprdc.name
-  dns_prefix          = format("aks-%s-dns", var.aks_name)
+  dns_prefix          = format("%s-dns", var.aks_name)
 
   default_node_pool {
     name            = "defaultpool"
@@ -68,15 +68,8 @@ resource "helm_release" "dapr" {
     create_namespace = true
 }
 
-resource "helm_release" "csi" {
-    name             = "csi-secrets-store-provider-azure"
-    repository       = "https://raw.githubusercontent.com/Azure/secrets-store-csi-driver-provider-azure/master/charts"
-    chart            = "csi-secrets-store-provider-azure"
-    namespace        = "kube-system"
-}
-
 resource "azurerm_redis_cache" "daprdc" {
-  name                = format("arc-%s", var.arc_name)
+  name                = var.arc_name
   location            = azurerm_resource_group.daprdc.location
   resource_group_name = azurerm_resource_group.daprdc.name
   capacity            = 0
@@ -85,13 +78,13 @@ resource "azurerm_redis_cache" "daprdc" {
   enable_non_ssl_port = true
 }
 
-resource "azurerm_key_vault_secret" "akvarchostname" {
+resource "azurerm_key_vault_secret" "archostname" {
   name         = "arc-hostname"
-  value        = azurerm_redis_cache.daprdc.hostname
+  value        = join(":", [azurerm_redis_cache.daprdc.hostname, azurerm_redis_cache.daprdc.port])
   key_vault_id = format("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.KeyVault/vaults/%s", var.subscription_id, var.tfstaterg, var.akv_name)
 }
 
-resource "azurerm_key_vault_secret" "akvarckey" {
+resource "azurerm_key_vault_secret" "arckey" {
   name         = "arc-key"
   value        = azurerm_redis_cache.daprdc.primary_access_key
   key_vault_id = format("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.KeyVault/vaults/%s", var.subscription_id, var.tfstaterg, var.akv_name)
