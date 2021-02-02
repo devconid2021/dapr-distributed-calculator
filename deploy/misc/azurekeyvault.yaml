@@ -1,0 +1,19 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: azurekeyvault
+  namespace: default
+spec:
+  type: secretstores.azure.keyvault
+  version: v1
+  metadata:
+  - name: vaultName
+    value: $AKV_NAME
+  - name: spnTenantId
+    value: $ARM_TENANT_ID
+  - name: spnClientId
+    value: $TFCLIENTID
+  - name: spnCertificate
+    secretKeyRef:
+      name: $CERT
+      key: $CERT.pfx

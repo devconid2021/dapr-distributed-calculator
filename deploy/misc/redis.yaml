@@ -1,0 +1,17 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: statestore
+spec:
+  type: state.redis
+  metadata:
+  - name: redisHost
+    secretKeyRef:
+      name: arc-hostname
+      key: arc-hostname
+  - name: redisPassword
+    secretKeyRef:
+      name: arc-key
+      key: arc-key
+auth:
+  secretStore: azurekeyvault
