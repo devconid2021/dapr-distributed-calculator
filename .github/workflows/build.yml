@@ -94,7 +94,6 @@ jobs:
           format: 'template'
           template: '@/contrib/sarif.tpl'
           output: 'python-trivy.sarif'
-          severity: 'CRITICAL,HIGH'
 
       - name: Upload artifact
         uses: actions/upload-artifact@v2
