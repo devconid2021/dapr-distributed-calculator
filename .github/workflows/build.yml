@@ -25,56 +25,45 @@ jobs:
   #   steps:
   #     - uses: actions/checkout@main
   #     - name: Test
-  #       uses: skx/github-action-tester@master
+  #       uses: skx/github-action-tester@main
   
   scan:
     # needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@main
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v1
+        uses: github/codeql-action/init@main
 
       - name: Autobuild
-        uses: github/codeql-action/autobuild@v1
+        uses: github/codeql-action/autobuild@main
       
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v1
+        uses: github/codeql-action/analyze@main
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@main
         with:
           name: ${{ secrets.ACRNAME }}
           path: /home/runner/work/dapr-distributed-calculator/results/python-builtin.sarif
-
-      - name: Download artifact
-        uses: actions/download-artifact@master
-        with:
-          name: ${{ secrets.ACRNAME }}
-          path: /home/runner/work/dapr-distributed-calculator/results/python-builtin.sarif 
-
-      - name: Upload scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v1
-        with:
-          sarif_file: /home/runner/work/dapr-distributed-calculator/results/python-builtin.sarif
 
   uploadscan:
     needs: scan
     runs-on: ubuntu-latest
     steps:  
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@main
 
       - name: Download artifact
-        uses: actions/download-artifact@master
+        uses: actions/download-artifact@main
         with:
           name: ${{ secrets.ACRNAME }}
           path: /home/runner/work/dapr-distributed-calculator/results/python-builtin.sarif 
 
       - name: Upload scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v1
+        uses: github/codeql-action/upload-sarif@main
         with:
           sarif_file: /home/runner/work/dapr-distributed-calculator/results/python-builtin.sarif
 
@@ -91,7 +80,7 @@ jobs:
 
       # # container scan
       # # https://github.com/Azure/container-scan
-      # - uses: Azure/container-scan@v0
+      # - uses: Azure/container-scan@main
       #   name: Docker image scan
       #   with:
       #     image-name: ${{ env.ACRSERVER }}
@@ -99,7 +88,7 @@ jobs:
       # # container vulnerability scan
       # # https://github.com/aquasecurity/trivy-action
       # - name: Docker image Trivy vulnerability scan
-      #   uses: aquasecurity/trivy-action@master
+      #   uses: aquasecurity/trivy-action@main
       #   with:
       #     image-ref: '${{ env.ACRSERVER }}' -- .azurecr.io/devconid2021/distributed-calculator-node:edge
       #     format: 'template'
@@ -108,12 +97,12 @@ jobs:
       #     severity: 'CRITICAL,HIGH'
 
       # - name: Upload Trivy scan results to GitHub Security tab
-      #   uses: github/codeql-action/upload-sarif@v1
+      #   uses: github/codeql-action/upload-sarif@main
       #   with:
       #     sarif_file: 'trivy-results.sarif'
 
       - name: Docker login
-        uses: azure/docker-login@v1
+        uses: azure/docker-login@main
         with:
           login-server: ${{ env.ACRSERVER }}
           username: ${{ secrets.ACRID }}
@@ -132,7 +121,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@main
       - name: Get AKS context
-        uses: azure/aks-set-context@v1
+        uses: azure/aks-set-context@main
         with:
           creds: '${{ secrets.AZCREDENTIALS }}'
           cluster-name: ${{ secrets.AKSNAME }}
@@ -145,7 +134,7 @@ jobs:
       
       # Create image pull secret for ACR
       - name: Pull ACR image
-        uses: azure/k8s-create-secret@v1
+        uses: azure/k8s-create-secret@main
         with:
           container-registry-url: ${{ env.ACRSERVER }}
           container-registry-username: ${{ secrets.ACRNAME }}
@@ -156,7 +145,7 @@ jobs:
       
       # Deploy app to AKS
       - name: Deploy to AKS
-        uses: azure/k8s-deploy@v1
+        uses: azure/k8s-deploy@main
         with:
           manifests: |
             deploy/dotnet-subtractor.yaml
