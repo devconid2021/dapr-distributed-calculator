@@ -42,14 +42,18 @@ jobs:
         
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v1
-        
+
+  uploadscan:
+    needs: scan
+    runs-on: ubuntu-latest
+    steps:        
       - name: Upload scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v1
         with:
-          sarif_file: /home/runner/work/dapr-distributed-calculator/results/*.sarif
-          # /home/runner/work/dapr-distributed-calculator/results/python-builtin.sarif
+          sarif_file: /home/runner/work/dapr-distributed-calculator/results/python-builtin.sarif
+          
   build:
-    needs: scan
+    needs: uploadscan
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -71,7 +75,7 @@ jobs:
       # - name: Docker image Trivy vulnerability scan
       #   uses: aquasecurity/trivy-action@master
       #   with:
-      #     image-ref: '${{ env.ACRSERVER }}'
+      #     image-ref: '${{ env.ACRSERVER }}' -- .azurecr.io/devconid2021/distributed-calculator-node:edge
       #     format: 'template'
       #     template: '@/contrib/sarif.tpl'
       #     output: 'trivy-results.sarif'
