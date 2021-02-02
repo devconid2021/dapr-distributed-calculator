@@ -39,16 +39,29 @@ jobs:
 
       - name: Autobuild
         uses: github/codeql-action/autobuild@v1
-        
+      
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v1
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ env.ACRSERVER }}
+          path: /home/runner/work/dapr-distributed-calculator/results/python-builtin.sarif 
 
   uploadscan:
     needs: scan
     runs-on: ubuntu-latest
     steps:  
       - name: Checkout repository
-        uses: actions/checkout@v2      
+        uses: actions/checkout@v2
+
+      - name: Download artifact
+        uses: actions/download-artifact@master
+        with:
+          name: ${{ env.ACRSERVER }}
+          path: /home/runner/work/dapr-distributed-calculator/results/python-builtin.sarif 
+
       - name: Upload scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v1
         with:
