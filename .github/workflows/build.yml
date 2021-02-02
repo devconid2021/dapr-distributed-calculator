@@ -46,7 +46,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
-          name: ${{ env.ACRSERVER }}
+          name: ${{ secrets.ACRNAME }}
           path: /home/runner/work/dapr-distributed-calculator/results/python-builtin.sarif 
 
   uploadscan:
@@ -59,7 +59,7 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@master
         with:
-          name: ${{ env.ACRSERVER }}
+          name: ${{ secrets.ACRNAME }}
           path: /home/runner/work/dapr-distributed-calculator/results/python-builtin.sarif 
 
       - name: Upload scan results to GitHub Security tab
