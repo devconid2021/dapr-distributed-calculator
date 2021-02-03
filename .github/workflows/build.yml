@@ -119,53 +119,53 @@ jobs:
     env:
       ACRSERVER: ${{ secrets.ACRNAME }}.azurecr.io
   
-  # deploy:
-  #   needs: build
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@main
-  #     - name: Get AKS context
-  #       uses: azure/aks-set-context@v1
-  #       with:
-  #         creds: '${{ secrets.AZCREDENTIALS }}'
-  #         cluster-name: ${{ secrets.AKSNAME }}
-  #         resource-group: ${{ secrets.AKSRG }}
-  #       id: login    
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@main
+      - name: Get AKS context
+        uses: azure/aks-set-context@v1
+        with:
+          creds: '${{ secrets.AZCREDENTIALS }}'
+          cluster-name: ${{ secrets.AKSNAME }}
+          resource-group: ${{ secrets.AKSRG }}
+        id: login    
       
-  #     # Create namespace if doesn't exist
-  #     # - run: |
-  #     #     kubectl create namespace ${{ env.NAMESPACE }} --dry-run -o json | kubectl apply -f -
+      # Create namespace if doesn't exist
+      # - run: |
+      #     kubectl create namespace ${{ env.NAMESPACE }} --dry-run -o json | kubectl apply -f -
       
-  #     # Create image pull secret for ACR
-  #     - name: Pull ACR image
-  #       uses: azure/k8s-create-secret@v1
-  #       with:
-  #         container-registry-url: ${{ env.ACRSERVER }}
-  #         container-registry-username: ${{ secrets.ACRNAME }}
-  #         container-registry-password: ${{ secrets.ACRSECRET }}
-  #         secret-name: ${{ env.SECRET }}
-  #         # namespace: ${{ env.NAMESPACE }}
-  #         # force: true
+      # Create image pull secret for ACR
+      - name: Pull ACR image
+        uses: azure/k8s-create-secret@v1
+        with:
+          container-registry-url: ${{ env.ACRSERVER }}
+          container-registry-username: ${{ secrets.ACRNAME }}
+          container-registry-password: ${{ secrets.ACRSECRET }}
+          secret-name: ${{ env.SECRET }}
+          # namespace: ${{ env.NAMESPACE }}
+          # force: true
       
-  #     # Deploy app to AKS
-  #     - name: Deploy to AKS
-  #       uses: azure/k8s-deploy@v1
-  #       with:
-  #         manifests: |
-  #           deploy/dotnet-subtractor.yaml
-  #           deploy/go-adder.yaml
-  #           deploy/node-divider.yaml
-  #           deploy/python-multiplier.yaml
-  #           deploy/react-calculator.yaml
-  #           deploy/misc/azurekeyvault.yaml
-  #           deploy/misc/redis.yaml
-  #         images: |
-  #           ${{ env.ACRSERVER }}:${{ github.sha }}
-  #         imagepullsecrets: |
-  #           ${{ env.SECRET }}
-  #         # namespace: ${{ env.NAMESPACE }}
-  #   env:
-  #     ACRSERVER: ${{ secrets.ACRNAME }}.azurecr.io
-  #     SECRET: ${{ secrets.ACRNAME }}
-  #     # NAMESPACE: ${{ secrets.ACRNAME }}
+      # Deploy app to AKS
+      - name: Deploy to AKS
+        uses: azure/k8s-deploy@v1
+        with:
+          manifests: |
+            deploy/dotnet-subtractor.yaml
+            deploy/go-adder.yaml
+            deploy/node-divider.yaml
+            deploy/python-multiplier.yaml
+            deploy/react-calculator.yaml
+            deploy/misc/azurekeyvault.yaml
+            deploy/misc/redis.yaml
+          images: |
+            ${{ env.ACRSERVER }}:${{ github.sha }}
+          imagepullsecrets: |
+            ${{ env.SECRET }}
+          # namespace: ${{ env.NAMESPACE }}
+    env:
+      ACRSERVER: ${{ secrets.ACRNAME }}.azurecr.io
+      SECRET: ${{ secrets.ACRNAME }}
+      # NAMESPACE: ${{ secrets.ACRNAME }}
