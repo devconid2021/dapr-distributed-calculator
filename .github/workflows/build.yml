@@ -20,7 +20,6 @@ on:
 
 jobs:
   test:
-    name: test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -170,7 +169,7 @@ jobs:
       # NAMESPACE: ${{ secrets.ACRNAME }}
 
   post-deploy:
-    name: deploy
+    needs: deploy
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
