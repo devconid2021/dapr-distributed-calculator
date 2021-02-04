@@ -28,7 +28,7 @@ jobs:
       - name: Run Test
         uses: skx/github-action-tester@master
         with:
-          script: scripts/run-test.sh
+          script: /home/runner/work/dapr-distributed-calculator/.github/scripts/run-test.sh
   # scan:
   #   # needs: test
   #   runs-on: ubuntu-latest
